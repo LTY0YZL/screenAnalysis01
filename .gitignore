@@ -1,0 +1,31 @@
+# Node
+gui/node_modules/
+gui/dist/
+gui/.env
+gui/.env.*
+
+# Python
+**/__pycache__/
+engine/.env
+engine/.env.*
+**/venv/
+**/.venv/
+*.pyc
+
+# Local secrets / app state
+**/api_keys.json
+**/settings.json
+**/exports/
+
+# Local engine data (keep out of git)
+**/images/
+**/sqlite/
+**/chroma/
+**/logs/
+**/*.sqlite
+**/*.sqlite3
+**/*.db
+
+# OS
+.DS_Store
+Thumbs.db

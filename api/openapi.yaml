@@ -1,0 +1,81 @@
+openapi: 3.1.0
+info:
+  title: ScreenAnalysis Engine API
+  version: 0.1.0
+servers:
+  - url: http://127.0.0.1:41234
+paths:
+  /v1/health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+  /v1/analyze:
+    post:
+      summary: Analyze screenshot bytes
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Analyze result
+  /v1/embed:
+    post:
+      summary: Embed arbitrary text
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Embedding result
+  /v1/search:
+    post:
+      summary: Semantic search records
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Search results
+  /v1/records:
+    get:
+      summary: List records
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Records page
+  /v1/records/{record_id}:
+    get:
+      summary: Get record detail
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: record_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Record detail
+  /v1/shutdown:
+    post:
+      summary: Gracefully stop engine
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Shutdown accepted
+  /v1/reindex:
+    post:
+      summary: Rebuild embeddings in vector index
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Reindex report
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: token

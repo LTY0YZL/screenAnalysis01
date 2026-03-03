@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Snip Overlay</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        cursor: crosshair;
+        background: rgba(0, 0, 0, 0.02);
+        user-select: none;
+      }
+      #selection {
+        position: absolute;
+        border: 2px solid #4ade80;
+        background: rgba(74, 222, 128, 0.08);
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="selection"></div>
+    <script src="./overlay.js"></script>
+  </body>
+</html>

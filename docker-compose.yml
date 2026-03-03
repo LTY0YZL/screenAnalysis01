@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  engine:
+    image: python:3.12-slim
+    working_dir: /workspace/engine
+    volumes:
+      - ./engine:/workspace/engine
+    command: sh -c "pip install -r requirements.txt && python main.py"
+    ports:
+      - "41234:41234"
+    environment:
+      - SCREENANALYSIS_HOST=0.0.0.0
+      - SCREENANALYSIS_PORT=41234
+      - SCREENANALYSIS_LAUNCH_TOKEN=dev-token
