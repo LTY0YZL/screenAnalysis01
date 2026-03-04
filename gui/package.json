@@ -59,8 +59,13 @@
       }
     ],
     "win": {
+      "icon": "icon.ico",
       "executableName": "Screen Analysis",
       "target": "nsis"
+    },
+    "nsis": {
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico"
     }
   }
 }
