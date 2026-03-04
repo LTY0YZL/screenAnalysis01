@@ -69,6 +69,7 @@ function App() {
   });
   const [selectedSavedKeyId, setSelectedSavedKeyId] = useState("");
   const [captureShortcutInput, setCaptureShortcutInput] = useState("A");
+  const showOfflineStatus = engineStatus === "offline";
 
   const api = useMemo(() => window.screenAnalysis, []);
   const historyGroups = useMemo(() => {
@@ -535,7 +536,7 @@ function App() {
         <div className="space-y-3 rounded-lg border border-slate-700 bg-slate-900/90 p-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold">Screen Assistant</h2>
-            <span className="text-xs text-slate-400">{engineStatus}</span>
+            {showOfflineStatus && <span className="text-xs text-rose-300">Offline</span>}
           </div>
 
           <div className="grid grid-cols-2 gap-2">
@@ -717,7 +718,7 @@ function App() {
       <div className="mx-auto grid max-w-5xl grid-cols-12 gap-3">
         <aside className="col-span-3 rounded-xl border border-slate-700 bg-slate-900/70 p-4">
           <h2 className="text-lg font-semibold">History</h2>
-          <p className="text-xs text-slate-400">Engine: {engineStatus}</p>
+          {showOfflineStatus && <p className="text-xs text-rose-300">Offline</p>}
           <div className="mt-3 flex gap-2">
             <input
               value={searchQuery}

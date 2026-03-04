@@ -10,4 +10,4 @@ app = create_app()
 
 if __name__ == "__main__":
     print(f"Starting {settings.app_name} on {settings.host}:{settings.port}")
-    uvicorn.run("main:app", host=settings.host, port=settings.port, reload=False)
+    uvicorn.run(app, host=settings.host, port=settings.port, reload=False)

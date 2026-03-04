@@ -2,7 +2,7 @@
 import { spawn } from "child_process";
 import crypto from "crypto";
 import { Buffer } from "buffer";
-import { app, BrowserWindow, globalShortcut, ipcMain, screen } from "electron";
+import { app, BrowserWindow, dialog, globalShortcut, ipcMain, screen } from "electron";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import path from "path";
@@ -202,7 +202,11 @@ function createMainWindow() {
     },
   });
 
-  mainWindow.loadURL("http://localhost:5173");
+  if (app.isPackaged) {
+    mainWindow.loadFile(path.join(__dirname, "dist", "index.html"));
+  } else {
+    mainWindow.loadURL("http://localhost:5173");
+  }
   applyCompactMode();
   mainWindow.on("closed", () => {
     mainWindow = null;
@@ -283,7 +287,25 @@ async function waitForEngineReady() {
   return false;
 }
 
-function findPythonCommand() {
+async function probeEngineHealth() {
+  try {
+    const res = await fetch(`${engineBaseUrl()}/health`);
+    if (res.ok) {
+      if (engineState !== "online") {
+        publishEngineStatus("online");
+      }
+      return true;
+    }
+  } catch {
+    // no-op
+  }
+  if (engineState === "online") {
+    publishEngineStatus("offline");
+  }
+  return false;
+}
+
+function findDevPythonCommand() {
   const engineRoot = path.join(__dirname, "..", "engine");
   const venvPythonWin = path.join(engineRoot, ".venv", "Scripts", "python.exe");
   const venvPythonUnix = path.join(engineRoot, ".venv", "bin", "python");
@@ -293,7 +315,41 @@ function findPythonCommand() {
   if (fs.existsSync(venvPythonUnix)) {
     return venvPythonUnix;
   }
-  return process.platform === "win32" ? "python" : "python3";
+  if (process.platform === "win32") {
+    return "py";
+  }
+  return "python3";
+}
+
+function resolveEngineLaunch() {
+  if (app.isPackaged) {
+    const packagedEngineExe = path.join(process.resourcesPath, "engine", "engine.exe");
+    if (!fs.existsSync(packagedEngineExe)) {
+      throw new Error(`Bundled engine not found: ${packagedEngineExe}`);
+    }
+    return {
+      command: packagedEngineExe,
+      args: [],
+      cwd: path.dirname(packagedEngineExe),
+    };
+  }
+  const engineRoot = path.join(__dirname, "..", "engine");
+  return {
+    command: findDevPythonCommand(),
+    args: [path.join(engineRoot, "main.py")],
+    cwd: engineRoot,
+  };
+}
+
+function showEngineStartupError(error) {
+  const detail = String(error?.message || error || "").trim();
+  const hint = app.isPackaged
+    ? "The bundled engine executable is missing or cannot start."
+    : "Install Python 3.10+ or build engine/dist/engine.exe before publishing the installer.";
+  dialog.showErrorBox(
+    "Engine startup failed",
+    `Unable to start the local analysis engine.\n\n${detail}\n\n${hint}`
+  );
 }
 
 async function startEngine() {
@@ -303,8 +359,7 @@ async function startEngine() {
   publishEngineStatus("booting");
   enginePort = 41000 + Math.floor(Math.random() * 1000);
   launchToken = crypto.randomBytes(24).toString("hex");
-  const pythonCmd = findPythonCommand();
-  const engineEntry = path.join(__dirname, "..", "engine", "main.py");
+  const launch = resolveEngineLaunch();
   let geminiApiKey = await readApiKey("gemini");
   let openaiApiKey = await readApiKey("chatgpt");
   let anthropicApiKey = await readApiKey("claude");
@@ -318,10 +373,21 @@ async function startEngine() {
     ANTHROPIC_API_KEY: anthropicApiKey,
   };
 
-  engineChild = spawn(pythonCmd, [engineEntry], {
-    cwd: path.join(__dirname, "..", "engine"),
-    env,
-    stdio: ["ignore", "pipe", "pipe"],
+  try {
+    engineChild = spawn(launch.command, launch.args, {
+      cwd: launch.cwd,
+      env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+  } catch (error) {
+    publishEngineStatus("offline");
+    showEngineStartupError(error);
+    return;
+  }
+
+  engineChild.once("error", (error) => {
+    publishEngineStatus("offline");
+    showEngineStartupError(error);
   });
 
   engineChild.stdout.on("data", (chunk) => {
@@ -463,7 +529,12 @@ function createOverlayWindow() {
   });
 }
 
-ipcMain.handle("engine:get-status", async () => ({ status: engineState }));
+ipcMain.handle("engine:get-status", async () => {
+  if (engineChild && engineState !== "booting" && engineState !== "restarting") {
+    await probeEngineHealth();
+  }
+  return { status: engineState };
+});
 ipcMain.handle("engine:analyze", async (_evt, payload) => engineRequest("/analyze", "POST", payload));
 ipcMain.handle("engine:chat", async (_evt, payload) => engineRequest("/chat", "POST", payload));
 ipcMain.handle("engine:search", async (_evt, payload) => engineRequest("/search", "POST", payload));

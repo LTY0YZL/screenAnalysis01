@@ -11,6 +11,9 @@ engine/.env.*
 **/venv/
 **/.venv/
 *.pyc
+engine/build/
+engine/dist/
+engine/*.spec
 
 # Local secrets / app state
 **/api_keys.json

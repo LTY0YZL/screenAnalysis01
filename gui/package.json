@@ -12,7 +12,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "electron:dev": "electron .",
-    "package:win": "electron-builder --win"
+    "package:win": "npm run build && electron-builder --win"
   },
   "dependencies": {
     "keytar": "^7.9.0",
@@ -41,6 +41,7 @@
   "build": {
     "appId": "com.screenanalysis.desktop",
     "productName": "Screen Analysis",
+    "artifactName": "${productName}.exe",
     "directories": {
       "buildResources": "build"
     },
@@ -51,7 +52,14 @@
       "overlay.html",
       "overlay.js"
     ],
+    "extraResources": [
+      {
+        "from": "../engine/dist/engine.exe",
+        "to": "engine/engine.exe"
+      }
+    ],
     "win": {
+      "executableName": "Screen Analysis",
       "target": "nsis"
     }
   }
